@@ -63,7 +63,7 @@ data "http" "inventory" {
 
 locals {
   vmsjson = jsondecode(data.http.inventory.response_body)
-  vms     = [for v in local.vmsjson : v if v.resources.host == "apollo3"]
+  vms     = [for v in local.vmsjson : v if v.host == "apollo3"]
 }
 
 provider "proxmox" {
