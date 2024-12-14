@@ -49,7 +49,7 @@ data "http" "inventory_token" {
 }
 
 locals {
-  auth_response = jsondecode(data.http.inventory_token.body)
+  auth_response = jsondecode(data.http.inventory_token.response_body)
   token = local.auth_response.token
 }
 
@@ -62,7 +62,7 @@ data "http" "inventory" {
 }
 
 locals {
-  vmsjson = jsondecode(data.http.inventory.body)
+  vmsjson = jsondecode(data.http.inventory.response_body)
   vms     = [for v in local.vmsjson : v if v.resources.host == "apollo3"]
 }
 
