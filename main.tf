@@ -76,7 +76,7 @@ provider "proxmox" {
 module "qemu-instance" {
   source = "./modules/qemu"
   # insert required variables here
-  for_each  = local.vms
+  for_each  = { for obj in local.vms : obj.name => obj }
   name      = each.value.name
   node      = each.value.node
   image     = each.value.image
