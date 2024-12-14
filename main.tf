@@ -57,13 +57,13 @@ data "http" "inventory" {
   url = "https://inventory.markaplay.net/v1/entities?format=terraform"
 
   request_headers = {
-    Authorization = "Bearer ${token}"
+    Authorization = "Bearer ${local.token}"
   }
 }
 
 locals {
   vmsjson = jsondecode(data.http.inventory)
-  vms     = [for v in vmsjson : v if v.resources.host == "apollo3"]
+  vms     = [for v in local.vmsjson : v if v.resources.host == "apollo3"]
 }
 
 provider "proxmox" {
