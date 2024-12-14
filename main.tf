@@ -31,23 +31,39 @@ variable "inventory_password" {
   sensitive = true
 }
 
+provider "http" {}
+
 data "http" "inventory_token" {
   url = "https://inventory.markaplay.net/v1/token"
 
-  request_body = concat("{\"username\" = \"%s\", \"password\" = \"%s\"}", var.inventory_username, var.inventory_password)
+  method = "POST"
+
+  request_headers = {
+    Content-Type = "application/json"
+  }
+
+  request_body = jsonencode({
+    username = "${var.inventory_username}"
+    password = "${var.inventory_password}"
+  })
 }
 
 locals {
-  token = jsondecode(data.http.inventory_token).token
+  auth_response = jsondecode(data.http.inventory_token)
+  token = local.auth_response.token
 }
 
 data "http" "inventory" {
   url = "https://inventory.markaplay.net/v1/entities?format=terraform"
 
   request_headers = {
-    Accept        = "application/json"
     Authorization = "Bearer ${token}"
   }
+}
+
+locals {
+  vmsjson = jsondecode(data.http.inventory)
+  vms     = [for v in vmsjson : v if v.resources.host == "apollo3"]
 }
 
 provider "proxmox" {
@@ -55,11 +71,6 @@ provider "proxmox" {
   pm_api_token_id     = var.pm_token
   pm_api_token_secret = var.pm_secret
   pm_tls_insecure     = true
-}
-
-locals {
-  vmsjson = jsondecode(data.http.inventory)
-  vms     = [for v in vmsjson : v if v.resources.host == "apollo3"]
 }
 
 module "qemu-instance" {
