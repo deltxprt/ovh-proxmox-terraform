@@ -30,14 +30,14 @@ resource "proxmox_vm_qemu" "qemu_vm" {
     virtio {
       virtio0 {
         disk {
-          backup  = var.os_disk.backup
+          backup  = (var.os_disk.backup == 1 ? true : false)
           storage = var.os_disk.storage
           size    = var.os_disk.size
         }
       }
       virtio1 {
         disk {
-          backup  = var.data_disk.backup
+          backup  = (var.data_disk.backup == 1 ? true : false)
           storage = var.data_disk.storage
           size    = var.data_disk.size
         }
