@@ -80,7 +80,7 @@ variable "os_disk" {
 
 variable "cloudinit_storage" {
   type = string
-  default = "local"
+  default = "data"
 }
 
 variable "data_disk" {
