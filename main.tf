@@ -78,7 +78,7 @@ module "qemu-instance" {
   # insert required variables here
   for_each  = { for obj in local.vms : obj.name => obj }
   name      = each.value.name
-  node      = each.value.node
+  node      = each.value.host
   image     = each.value.image
   tags      = each.value.tags
   cicustom  = each.value.cicustom
