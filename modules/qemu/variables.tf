@@ -67,12 +67,12 @@ variable "controller" {
 }
 variable "os_disk" {
   type = object({
-      backup  = bool
+      backup  = number
       storage = string
       size    = string
     })
   default = {
-    backup = true
+    backup = 1
     storage = "data01"
     size = "10G"
   }
@@ -85,12 +85,12 @@ variable "cloudinit_storage" {
 
 variable "data_disk" {
   type = object({
-      backup  = bool
+      backup  = number
       storage = string
       size    = string
     })
   default = {
-    backup = true
+    backup = 1
     storage = "local"
     size = "10G"
   }
