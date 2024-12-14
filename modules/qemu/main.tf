@@ -17,7 +17,7 @@ resource "proxmox_vm_qemu" "qemu_vm" {
 
   cores   = var.cores
   sockets = var.sockets
-  numa    = var.numa
+  numa    = (var.numa  == 1 ? true : false)
   memory  = var.memory
 
   smbios {

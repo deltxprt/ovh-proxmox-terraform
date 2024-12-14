@@ -27,8 +27,8 @@ variable "sockets" {
   default = 2
 }
 variable "numa" {
-  type = bool
-  default = true
+  type = number
+  default = 1
 }
 variable "memory" {
   type = number
