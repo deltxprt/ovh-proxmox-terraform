@@ -2,11 +2,11 @@ terraform {
   required_providers {
     proxmox = {
       source  = "Telmate/proxmox"
-      version = "3.0.1-rc3"
+      version = "3.0.1-rc6"
     }
-    hcp = {
-      source  = "hashicorp/hcp"
-      version = "0.94.1"
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.0"
     }
   }
 }
@@ -16,20 +16,38 @@ variable "pm_url" {
 }
 variable "pm_token" {
   type = string
+  sensitive = true
 }
 variable "pm_secret" {
   type = string
+  sensitive = true
 }
-variable "hcp_cid" {
+variable "inventory_username" {
   type = string
+  sensitive = true
 }
-variable "hcp_secret" {
+variable "inventory_password" {
   type = string
+  sensitive = true
 }
 
-provider "hcp" {
-  client_id     = var.hcp_cid
-  client_secret = var.hcp_secret
+data "http" "inventory_token" {
+  url = "https://inventory.markaplay.net/v1/token"
+
+  request_body = concat("{\"username\" = \"%s\", \"password\" = \"%s\"}", var.inventory_username, var.inventory_password)
+}
+
+locals {
+  token = jsondecode(data.http.inventory_token).token
+}
+
+data "http" "inventory" {
+  url = "https://inventory.markaplay.net/v1/entities?format=terraform"
+
+  request_headers = {
+    Accept = "application/json"
+    Authorization = "Bearer ${token}"
+  }
 }
 
 provider "proxmox" {
@@ -39,13 +57,28 @@ provider "proxmox" {
 }
 
 locals {
-  vms_files  = fileset(".", "qemu/*.yaml")
-  vms        = { for file in local.vms_files : basename(file) => yamldecode(file(file)) }
-  lxcs_files = fileset(".", "lxc/*.yaml")
-  lxcs       = { for file in local.lxcs_files : basename(file) => yamldecode(file(file)) }
+  vmsjson        = jsondecode(data.http.inventory)
+  vms = [for v in vmsjson : v if v.resources.host == "apollo3"]
 }
 
-
+module "qemu-instance" {
+  source = "./modules/qemu"
+  # insert required variables here
+  for_each = local.vms
+  name = each.value.name
+  node = each.value.node
+  image = each.value.image
+  tags = each.value.tags
+  cicustom = each.value.cicustom
+  cores = each.value.cores
+  sockets = each.value.sockets
+  numa = each.value.numa
+  memory = each.value.memory
+  ip = each.value.ip
+  bridge = each.value.bridge
+  os_disk = each.value.os_disk
+  data_disk = each.value.data
+}
 
 #module "lxc-instance" {
 #  source  = "./modules/lxc"
@@ -80,22 +113,3 @@ locals {
 #  }
 #  # insert required variables here
 #}
-
-module "qemu-instance" {
-  source = "./modules/qemu"
-  # insert required variables here
-  for_each = local.vms
-  name = each.value.name
-  node = each.value.node
-  image = each.value.image
-  tags = each.value.tags
-  cicustom = each.value.cicustom
-  cores = each.value.cores
-  sockets = each.value.sockets
-  numa = each.value.numa
-  memory = each.value.memory
-  ip = each.value.ip
-  bridge = each.value.bridge
-  os_disk = each.value.os_disk
-  data_disk = each.value.data
-}
